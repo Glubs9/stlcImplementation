@@ -1,6 +1,4 @@
-% normal lambda calculus
-
-% name()
+% untyped lambda calculus (mostly copied from untyped.pl)
 
 %keep variables finite to make backwards work better
 variable(X) :- member(X, [p,q,r,s,t,x,y,z,a,b,c]).
@@ -33,7 +31,9 @@ freshVar(X, Y) :-
     %if the need for backwards comes in then define a set of variables
 subst(var(X), X, Y, Y) :- isTerm(Y). %making backwards half work
 subst(var(X), Y, _, var(X)) :- X \== Y.
-subst(app(X,Y), Var, Val, app(Xsub,Ysub)) :- subst(X,Var,Val,Xsub), subst(Y,Var,Val,Ysub).
+subst(app(X,Y), Var, Val, app(Xsub,Ysub)) :-
+    subst(X,Var,Val,Xsub), 
+    subst(Y,Var,Val,Ysub).
 subst(abs(X,Y), X, _, abs(X, Y)).
 subst(abs(X,Y), Var, Val, O2) :-
     not(X = Var),
@@ -76,3 +76,62 @@ inf() :- beta(app(
     abs(x, app(var(x), var(x))),
     abs(x, app(var(x), var(x)))
     ), _).
+
+
+% adding types from here down
+
+isType(typeVar(X)) :- variable(X).
+isType(impl(X,Y)) :- isType(X), isType(Y).
+
+% note: isCtx not used, but it's to define what a valid ctx 
+% should look like
+% note: j stands for judgement
+isCtx([]).
+isCtx([j(X,Y)|Z]) :- 
+    isTerm(X),
+    isType(Y),
+    isCtx(Z).
+
+% type(term, ctx), works for type inference and type checking
+type(var(X), Ctx) :- 
+    isType(Y),
+    member(j(var(X), Y), Ctx).
+type(app(A,B), Ctx) :-
+    type(A, Ctx),
+    type(B, Ctx),
+    isType(X), %idk if this and below are necersarry
+    isType(Y),
+    member(j(A, impl(X, Y)), Ctx),
+    member(j(B, X), Ctx),
+    member(j(app(A,B), Y), Ctx).
+type(abs(X,Y), Ctx) :-
+    isType(A),
+    member(j(var(X), A), Ctx),
+    type(Y, Ctx),
+    isType(B),
+    member(j(Y, B), Ctx),
+    member(j(abs(X,Y), impl(A,B)), Ctx).
+
+% terms can have multiple types in above so we force uniqueness in the context.
+removeDupes([], []).
+removeDupes([j(Term,Type)|Xs], [j(Term,Type)|Ys]) :-
+    removeDupes(Xs,Ys),
+    not(member(j(Term,_), Ys)).
+
+uniqueType(Term, Ctx) :-
+    type(Term, Ctx),
+    removeDupes(Ctx, Ctx). %isUnique
+
+flattenTerm(var(X), [var(X)]).
+flattenTerm(app(X,Y), [app(X,Y)|C]) :-
+    flattenTerm(X,A),
+    flattenTerm(X,B),
+    append(A,B,C).
+flattenTerm(abs(X,Y), [abs(X,Y)|C]) :- flattenTerm(Y,C).
+
+terseType(Term, Ctx) :-
+    flattenTerm(Term, Fterm),
+    same_length(Ctx, Fterm),
+    type(Term, Ctx).
+
+% might have to hard code dfs into new one?
