@@ -94,22 +94,22 @@ isCtx([j(X,Y)|Z]) :-
 
 % type(term, ctx), works for type inference and type checking
 type(var(X), Ctx) :- 
-    isType(Y),
-    member(j(var(X), Y), Ctx).
+    member(j(var(X), Y), Ctx),
+    isType(Y).
 type(app(A,B), Ctx) :-
     type(A, Ctx),
     type(B, Ctx),
-    isType(X), %idk if this and below are necersarry
-    isType(Y),
     member(j(A, impl(X, Y)), Ctx),
     member(j(B, X), Ctx),
+    isType(X),
+    isType(Y),
     member(j(app(A,B), Y), Ctx).
 type(abs(X,Y), Ctx) :-
-    isType(A),
     member(j(var(X), A), Ctx),
+    isType(A),
     type(Y, Ctx),
-    isType(B),
     member(j(Y, B), Ctx),
+    isType(B),
     member(j(abs(X,Y), impl(A,B)), Ctx).
 
 typeTests() :-
@@ -123,7 +123,7 @@ typeTests() :-
         j(var(y), typeVar(q)),
         j(abs(y, var(x)), impl(typeVar(q), typeVar(p))),
         j(abs(x, abs(y, var(x))), impl(typeVar(p), impl(typeVar(q), typeVar(p)))) %haha lmao
-    ]).
+    ]). %hey hey it works :):):):):):):)
 
 % below this point is my attempts at type inference via
 % prolog brute force (spoiler, it doesn't really work)
