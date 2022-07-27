@@ -3,7 +3,7 @@
 % name()
 
 %keep variables finite to make backwards work better
-variable(X) :- list_member(X, [p,q,r,s,t,x,y,z,a,b,c]).
+variable(X) :- member(X, [p,q,r,s,t,x,y,z,a,b,c]).
 
 isTerm(var(X)) :- variable(X).
 isTerm(app(X,Y)) :- isTerm(X), isTerm(Y).
@@ -26,7 +26,7 @@ fv(abs(X,Y), Z) :-
 freshVar(X, Y) :- 
     variable(Y),
     fv(X, FV),
-    not(list_member(FV, Y)).
+    not(member(Y, FV)).
 
 %subst : PreSubst Term X Var X substVal X PostSubst Term
 %not equals doesn't specify domain hence this doesn't work backwards.
@@ -38,20 +38,41 @@ subst(abs(X,Y), X, _, abs(X, Y)).
 subst(abs(X,Y), Var, Val, O2) :-
     not(X = Var),
     fv(Val, L),
-    list_member(L, X),
+    member(X, L),
     freshVar(app(Y,Val), F), %idea taken from "alpha-conversion is easy by Thorsten altenkirch"
     subst(Y, X, F, O1), 
     subst(abs(F,O1), Var, Val, O2).
 subst(abs(X,Y), Var, Val, abs(X,O)) :-
     not(X = Var),
     fv(Val, L),
-    not(list_member(L, X)),
+    not(member(X, L)),
     subst(Y, Var, Val, O).
 
 %bruh I hsould test substitution but I can't be bothered lmaooooo
+betaStep(var(X), var(X)).
+betaStep(abs(X,Y), abs(X,Z)) :- beta(Y, Z).
+betaStep(app(abs(X,Y), Z), O2) :-
+    subst(Y, X, Z, O1),
+    betaStep(O1, O2).
+betaStep(app(X,Y), app(O1,O2)) :- 
+    not(abs(_, _) = X),
+    betaStep(X, O1),
+    betaStep(Y, O2).
 
+beta(X, X) :- betaStep(X, X).
+beta(X, Y) :- 
+    betaStep(X, Z),
+    not(X = Z),
+    beta(Z, Y).
 
-%left is unreduced, right is reduced
-%oneStep(var(X), var(X)).
-%oneStep(abs(var(_), X), abs(var(_), Y)) :- oneStep(X,Y).
-%oneStep(app(X,Y))
+tests() :-
+    beta(app(abs(x, var(x)), abs(x, var(x))), abs(x, var(x))),
+    beta(app(app(
+        abs(x, abs(y, var(x))), 
+        var(y)), var(x)), 
+    var(y)).
+
+inf() :- beta(app(
+    abs(x, app(var(x), var(x))),
+    abs(x, app(var(x), var(x)))
+    ), _).
