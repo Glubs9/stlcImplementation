@@ -129,6 +129,7 @@ flattenTerm(app(X,Y), [app(X,Y)|C]) :-
     append(A,B,C).
 flattenTerm(abs(X,Y), [abs(X,Y)|C]) :- flattenTerm(Y,C).
 
+% doesn't work :(
 terseType(Term, Ctx) :-
     flattenTerm(Term, Fterm),
     same_length(Ctx, Fterm),
