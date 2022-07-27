@@ -112,6 +112,22 @@ type(abs(X,Y), Ctx) :-
     member(j(Y, B), Ctx),
     member(j(abs(X,Y), impl(A,B)), Ctx).
 
+typeTests() :-
+    type(var(x), [j(var(x), typeVar(p))]),
+    type(abs(x,var(x)), [
+        j(var(x), typeVar(p)), 
+        j(abs(x, var(x)), impl(typeVar(p), typeVar(p)))
+    ]),
+    type(abs(x, abs(y, var(x))), [
+        j(var(x), typeVar(p)),
+        j(var(y), typeVar(q)),
+        j(abs(y, var(x)), impl(typeVar(q), typeVar(p))),
+        j(abs(x, abs(y, var(x))), impl(typeVar(p), impl(typeVar(q), typeVar(p)))) %haha lmao
+    ]).
+
+% below this point is my attempts at type inference via
+% prolog brute force (spoiler, it doesn't really work)
+
 % terms can have multiple types in above so we force uniqueness in the context.
 removeDupes([], []).
 removeDupes([j(Term,Type)|Xs], [j(Term,Type)|Ys]) :-
@@ -135,4 +151,3 @@ terseType(Term, Ctx) :-
     same_length(Ctx, Fterm),
     type(Term, Ctx).
 
-% might have to hard code dfs into new one?
