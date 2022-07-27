@@ -92,7 +92,8 @@ isCtx([j(X,Y)|Z]) :-
     isType(Y),
     isCtx(Z).
 
-% type(term, ctx), works for type inference and type checking
+% type(term, ctx), works for type checking and type inference*
+% *: not really lol
 type(var(X), Ctx) :- 
     member(j(var(X), Y), Ctx),
     isType(Y).
