@@ -220,15 +220,3 @@ progress (app-e L M)    | done (appVarNF pv) with progress M
 progress (app-e L M)    | done (appAppNF pab pv) with progress M
 ...                        | step y = step (appr y)
 ...                        | done y = done (appAppNF (appAppNF pab pv) y)
--- progress (lam-i a) = ?
--- with is-normalform z
--- ...                              | varNF = appVarNF
--- ...                              | lamNF p = ?
--- ...                              | appVarNf = ?
--- ...                              | appAppNF = ?
---- progress (lam-i p) = proglam p
-
--- progress went really poorly, i am going to try the other way first
-
--- empty
--- progress (app-e )
