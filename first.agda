@@ -150,9 +150,13 @@ data is-normalform : Term -> Set where
     lamNF : forall {x V} ->
        is-normalform V ->
        is-normalform (l x a V)
-    appNF : forall {x V} ->
+    appVarNF : forall {x V} ->
        is-normalform V ->
        is-normalform ((` x) * V)
+    appAppNF : forall {a b V} ->
+       is-normalform (a * b) ->
+       is-normalform V ->
+       is-normalform ((a * b) * V)
 
 
 
@@ -164,3 +168,64 @@ data is-normalform : Term -> Set where
 -- preservation is the same
 
 -- import equality and values not reducing becomes easy
+
+
+-- observational equality now for good
+-- quotient types
+-- coinduction??
+-- simon peyton jones "how to implement funcitonal programming languages"
+-- red book "the art of implementing ..."
+
+-- what are spines?
+
+
+-- are quots really decidable?
+-- coq is really hard
+
+-- ulf norrel chalmers phd thesis
+-- phillip wadler plfa
+
+-- ott "proositional equality"
+-- "we baek it in to every constructor for that type"
+
+-- we promise never to use the custom equality
+-- andreas kovasch "categories with families in types"
+
+
+data Progress (M : Term) : Set where
+    step : forall {N}
+        -> M reduces N
+        -> Progress M
+    done : is-normalform M
+        -> Progress M
+
+progress : forall {M A}
+   -> empty impl M type A
+   -> Progress M
+progress (refl ())
+progress (app-e L M) with progress L
+progress (app-e L M)    | step x = step (appl x)
+progress (app-e L M)    | done varNF with progress M
+...                        | step y = step (appr y)
+...                        | done z = done (appVarNF z)
+progress (app-e L M)    | done (lamNF pv) with progress M -- pattern match here
+...                        | step y = step (appr y)
+...                        | done z = step (beta)
+progress (app-e L M)    | done (appVarNF pv) with progress M
+...                        | step y = step (appr y) 
+...                        | done y = done (appAppNF (appVarNF pv) y)
+progress (app-e L M)    | done (appAppNF pab pv) with progress M
+...                        | step y = step (appr y)
+...                        | done y = done (appAppNF (appAppNF pab pv) y)
+progress (lam-i a) = done (lamNF {!!}) -- pattern match pi
+-- with is-normalform z
+-- ...                              | varNF = appVarNF
+-- ...                              | lamNF p = ?
+-- ...                              | appVarNf = ?
+-- ...                              | appAppNF = ?
+--- progress (lam-i p) = proglam p
+
+-- progress went really poorly, i am going to try the other way first
+
+-- empty
+-- progress (app-e )
