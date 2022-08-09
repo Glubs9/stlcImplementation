@@ -148,8 +148,10 @@ data is-normalform : Term -> Set where
     varNF : forall {x} ->
        is-normalform (` x)
     lamNF : forall {x V} ->
-       is-normalform V ->
-       is-normalform (l x a V)
+       is-normalform (l x a V) -- this means that (lam x . (lam x . x) x) is a normal form.
+                               -- this is not great but i couldn't solve progress without it
+                               -- ask donovan about it. although I don't think plfa's formalization
+                               -- permits it easily.
     appVarNF : forall {x V} ->
        is-normalform V ->
        is-normalform ((` x) * V)
@@ -202,13 +204,14 @@ data Progress (M : Term) : Set where
 progress : forall {M A}
    -> empty impl M type A
    -> Progress M
+progress (lam-i p) = done lamNF -- functions are not evaluated until necersarry
 progress (refl ())
 progress (app-e L M) with progress L
 progress (app-e L M)    | step x = step (appl x)
 progress (app-e L M)    | done varNF with progress M
 ...                        | step y = step (appr y)
 ...                        | done z = done (appVarNF z)
-progress (app-e L M)    | done (lamNF pv) with progress M -- pattern match here
+progress (app-e L M)    | done (lamNF) with progress M -- pattern match here
 ...                        | step y = step (appr y)
 ...                        | done z = step (beta)
 progress (app-e L M)    | done (appVarNF pv) with progress M
@@ -217,7 +220,7 @@ progress (app-e L M)    | done (appVarNF pv) with progress M
 progress (app-e L M)    | done (appAppNF pab pv) with progress M
 ...                        | step y = step (appr y)
 ...                        | done y = done (appAppNF (appAppNF pab pv) y)
-progress (lam-i a) = done (lamNF {!!}) -- pattern match pi
+-- progress (lam-i a) = ?
 -- with is-normalform z
 -- ...                              | varNF = appVarNF
 -- ...                              | lamNF p = ?
