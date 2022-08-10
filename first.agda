@@ -211,7 +211,7 @@ progress (app-e L M)    | step x = step (appl x)
 progress (app-e L M)    | done varNF with progress M
 ...                        | step y = step (appr y)
 ...                        | done z = done (appVarNF z)
-progress (app-e L M)    | done (lamNF) with progress M -- pattern match here
+progress (app-e L M)    | done (lamNF) with progress M
 ...                        | step y = step (appr y)
 ...                        | done z = step (beta)
 progress (app-e L M)    | done (appVarNF pv) with progress M
