@@ -204,8 +204,8 @@ data Progress (M : Term) : Set where
 progress : forall {M A}
    -> empty impl M type A
    -> Progress M
-progress (lam-i p) = done lamNF -- functions are not evaluated until necersarry
 progress (refl ())
+progress (lam-i p) = done lamNF -- functions are not evaluated until necersarry
 progress (app-e L M) with progress L
 progress (app-e L M)    | step x = step (appl x)
 progress (app-e L M)    | done varNF with progress M
@@ -220,3 +220,41 @@ progress (app-e L M)    | done (appVarNF pv) with progress M
 progress (app-e L M)    | done (appAppNF pab pv) with progress M
 ...                        | step y = step (appr y)
 ...                        | done y = done (appAppNF (appAppNF pab pv) y)
+
+
+
+ext : forall {G G'}
+  -> (forall {x A} -> G ni x type A -> G' ni x type A)
+  -> (forall {x y A B} -> G , y type B ni x type A -> G' , y type B ni x type A)
+ext p Z = Z
+ext p (S pf) = S (p pf)
+
+
+rename : forall {G G'}
+  -> (forall {x A} -> G ni x type A -> G' ni x type A)
+  -> (forall {M A} -> G impl M type A -> G' impl M type A)
+rename p (refl x) = refl (p x)
+rename p (lam-i x) = lam-i (rename (ext p) x)
+rename p (app-e L M) = app-e (rename p L) (rename p M)
+
+-- haha wow how nice is that
+
+
+weaken : forall {G M A}
+   -> empty impl M type A
+   -> G impl M type A
+weaken {G} implM = rename p implM 
+   where p : forall {z C}
+           -> empty ni z type C
+           -> G ni z type C
+         p ()
+
+-- drop is broken :(
+-- drop : forall {G x M A B C}
+--     -> G , x type A , x type B impl M type C
+--    -> G , x type B impl M type C
+-- drop {G} {x} {M} {A} {B} {C} implM = rename p impl M
+--    where p : forall {z C}
+--            -> G , x type A , x type B ni z type C
+--            -> G , x type A ni z type C
+--          p Z = Z
